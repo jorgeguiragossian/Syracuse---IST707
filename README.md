@@ -58,3 +58,14 @@ Both clouds use the same font-size scale based on raw term occurrences; counts a
 not normalized for group size or narrative length. Groups below 10 records carry
 a small-sample note. Selecting the same type twice explicitly reports identical
 groups. Resetting the browsing filters does not reset the comparison.
+
+
+### Distinctive words
+
+Each comparison group lists up to 10 terms with higher document prevalence than
+the other group. A word counts at most once per narrative. Terms must appear in
+at least two group narratives. Rank by percentage-point difference in prevalence,
+then supporting narrative count, then alphabetical order. Tables show both raw
+counts/denominators and percentages. Identical groups produce no distinctive terms.
+The method is descriptive, not a significance test; report length and small groups
+can still affect it. Run `node --test scripts/test_distinctive.mjs` for regression checks.

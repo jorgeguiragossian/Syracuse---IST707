@@ -8,12 +8,15 @@ export function summarize(events) {
 
 // Count event text only: episode context can repeat across several records.
 const stopwords = new Set(`a an the and or but if as at by for from in into of on onto to with without about above after again against all also am are around be because been before being below between both can could did do does doing down during each few had has have having he her here hers herself him himself his how i its it itself just me more most my myself no nor not off once only other our ours ourselves out over own same she should so some such than that their theirs them themselves then there these they this those through too under until up upon us very was we were what when where which while who whom why will would you your yours yourself yourselves is said`.split(/\s+/));
+function narrativeWords(text) {
+  return (text.toLowerCase().replace(/[’']/g, '').match(/[a-z]+/g) || [])
+    .filter(word => word.length >= 3 && !stopwords.has(word));
+}
 export function wordFrequencies(events, limit = 40) {
   const counts = new Map();
   for (const event of events) {
-    const words = event.EVENT_NARRATIVE.toLowerCase().replace(/[’']/g, '').match(/[a-z]+/g) || [];
+    const words = narrativeWords(event.EVENT_NARRATIVE);
     for (const word of words) {
-      if (word.length < 3 || stopwords.has(word)) continue;
       counts.set(word, (counts.get(word) || 0) + 1);
     }
   }
@@ -43,4 +46,26 @@ export function eventsCSV(events) {
   }
   const rows = events.map(event => [...fields.map(field => event[field]), sentimentLabel(event.sentiment?.compound), event.sentiment?.compound ?? '', JSON.stringify(event.entities || [])]);
   return '\uFEFF' + [headers, ...rows].map(row => row.map(cell).join(',')).join('\r\n') + '\r\n';
+}
+
+// Document prevalence avoids letting repeated words within one report dominate.
+export function distinctiveWords(group, other, limit = 10) {
+  if (!group.length || !other.length) return [];
+  function documents(events) {
+    const counts = new Map();
+    for (const event of events) {
+      for (const word of new Set(narrativeWords(event.EVENT_NARRATIVE))) {
+        counts.set(word, (counts.get(word) || 0) + 1);
+      }
+    }
+    return counts;
+  }
+  const counts = documents(group), others = documents(other);
+  return [...counts].map(([word,count]) => {
+    const otherCount = others.get(word) || 0;
+    const rate = count / group.length, otherRate = otherCount / other.length;
+    return {word, count, otherCount, rate, otherRate, gap:100 * (rate - otherRate)};
+  }).filter(term => term.count >= 2 && term.gap > 0)
+    .sort((a,b) => b.gap - a.gap || b.count - a.count || a.word.localeCompare(b.word,'en'))
+    .slice(0,limit);
 }
