@@ -3,13 +3,16 @@ import csv
 import json
 from pathlib import Path
 import spacy
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 ROOT = Path(__file__).resolve().parents[1]
 with (ROOT / 'data/sample/storm_events_2024_sample.csv').open(newline='', encoding='utf-8') as source:
     records = list(csv.DictReader(source))
 nlp = spacy.load('en_core_web_sm')
+sentiment = SentimentIntensityAnalyzer()
 for record, doc in zip(records, nlp.pipe((r['EVENT_NARRATIVE'] for r in records), batch_size=32)):
     text = record['EVENT_NARRATIVE']
+    record['sentiment'] = sentiment.polarity_scores(text)
     # JavaScript slices use UTF-16 code units rather than Python code points.
     record['entities'] = [
         {'text': ent.text, 'label': ent.label_,

@@ -20,3 +20,13 @@ export function wordFrequencies(events, limit = 40) {
   return [...counts].map(([word, count]) => ({word, count}))
     .sort((a,b) => b.count - a.count || a.word.localeCompare(b.word, 'en')).slice(0,limit);
 }
+
+export function sentimentLabel(score) {
+  if (!Number.isFinite(score)) return 'Unavailable';
+  return score >= 0.05 ? 'Positive' : score <= -0.05 ? 'Negative' : 'Neutral';
+}
+export function sentimentSummary(events) {
+  const counts = {Positive:0, Neutral:0, Negative:0, Unavailable:0};
+  for (const event of events) counts[sentimentLabel(event.sentiment?.compound)]++;
+  return counts;
+}

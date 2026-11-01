@@ -1,4 +1,4 @@
-import {months, filterEvents, summarize, wordFrequencies} from './data.mjs';
+import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary} from './data.mjs';
 const $ = id => document.getElementById(id);
 let events = [], filtered = [], visible = 12;
 function node(tag, text, cls) { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; }
@@ -31,6 +31,8 @@ function renderCards() {
     const meta = node('div', '', 'card-meta'); meta.append(node('span', event.EVENT_TYPE, 'event-tag'),node('span',event.STATE.replaceAll('_',' ')));
     const title = event.BEGIN_LOCATION || event.CZ_NAME || event.STATE;
     card.append(meta,node('h3',title.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())),node('p',event.BEGIN_DATE_TIME+' · '+event.CZ_TIMEZONE,'date'),narrativeNode(event));
+    const label = sentimentLabel(event.sentiment?.compound);
+    card.append(node('p', `Predicted sentiment: ${label}${label === 'Unavailable' ? '' : ' · ' + event.sentiment.compound.toFixed(3)}`, 'sentiment-caption'));
     if (event.EPISODE_NARRATIVE.trim()) { const details = node('details',''); details.append(node('summary','Read broader episode context'),node('p',event.EPISODE_NARRATIVE.replace(/\|\|/g,'\n\n'),'narrative')); card.append(details); }
     card.append(node('p',`EVENT ${event.EVENT_ID} · EPISODE ${event.EPISODE_ID}`,'record-id')); cards.append(card);
   }
@@ -54,11 +56,26 @@ function renderWords() {
     const row = document.createElement('tr'); row.append(node('td', word), node('td', count.toLocaleString())); table.append(row);
   }
 }
+function renderSentiment() {
+  const summary = $('sentiment-summary'); summary.replaceChildren();
+  if (!filtered.length) { summary.append(node('p', 'No matching narratives to analyze.', 'word-description')); return; }
+  const counts = sentimentSummary(filtered);
+  for (const [label, count] of Object.entries(counts)) {
+    if (label === 'Unavailable' && !count) continue;
+    const row = node('div', '', 'sentiment-row');
+    const percent = 100 * count / filtered.length;
+    row.append(node('span', label), node('span', `${count} (${percent.toFixed(1)}%)`));
+    const track = node('div', '', 'sentiment-track');
+    const bar = node('div', '', `sentiment-bar ${label.toLowerCase()}`); bar.style.width = `${percent}%`;
+    track.append(bar); row.append(track); summary.append(row);
+  }
+}
 function update() {
   visible = 12;
   filtered = filterEvents(events,{state:$('state').value,month:$('month').value,type:$('type').value});
   const summary = summarize(filtered); for (const key of Object.keys(summary)) $(key).textContent = summary[key].toLocaleString();
   $('status').textContent = `${filtered.length} of ${events.length} sample events match your filters.`;
+  renderSentiment();
   renderWords();
   renderCards();
 }
