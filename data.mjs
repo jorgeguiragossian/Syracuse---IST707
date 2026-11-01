@@ -30,3 +30,17 @@ export function sentimentSummary(events) {
   for (const event of events) counts[sentimentLabel(event.sentiment?.compound)]++;
   return counts;
 }
+
+export function eventsCSV(events) {
+  // Explicit source fields keep column order stable as model outputs evolve.
+  const fields = ['EVENT_ID','EPISODE_ID','YEAR','STATE','MONTH_NAME','EVENT_TYPE','BEGIN_DATE_TIME','CZ_TIMEZONE','CZ_NAME','BEGIN_LOCATION','END_LOCATION','INJURIES_DIRECT','INJURIES_INDIRECT','DEATHS_DIRECT','DEATHS_INDIRECT','DAMAGE_PROPERTY','DAMAGE_CROPS','BEGIN_LAT','BEGIN_LON','EVENT_NARRATIVE','EPISODE_NARRATIVE'];
+  const headers = [...fields, 'SENTIMENT_LABEL','SENTIMENT_COMPOUND','ENTITIES_JSON'];
+  function cell(value) {
+    let text = String(value ?? '');
+    // Prevent source text from becoming a formula when opened in a spreadsheet.
+    if (/^[\s\u0000-\u001f]*[=+@-]/u.test(text) && typeof value !== 'number' && !/^-?\d+(?:\.\d+)?$/.test(text)) text = "'" + text;
+    return '"' + text.replaceAll('"','""') + '"';
+  }
+  const rows = events.map(event => [...fields.map(field => event[field]), sentimentLabel(event.sentiment?.compound), event.sentiment?.compound ?? '', JSON.stringify(event.entities || [])]);
+  return '\uFEFF' + [headers, ...rows].map(row => row.map(cell).join(',')).join('\r\n') + '\r\n';
+}

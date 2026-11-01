@@ -32,3 +32,18 @@ tooltips identify corrected entities. Metadata matching is a heuristic and canno
 prove the intended referent in every sentence.
 
 Run the correction regression checks with `python -m unittest discover -s scripts -p 'test_*.py'`.
+
+
+## Export filtered results
+
+Download filtered CSV exports all matching records, regardless of pagination or
+whether entity highlights are enabled. Includes source metadata, both narratives,
+VADER label/compound score, and entity predictions as JSON in ENTITIES_JSON. Entity
+JSON retains offsets, model labels, and provenance of location corrections. Offsets
+are JavaScript UTF-16 code units into EVENT_NARRATIVE. Scores remain exploratory.
+Files are UTF-8 with a BOM for spreadsheet compatibility. Commas, quotes, and
+newlines are escaped. Source strings beginning with a spreadsheet formula marker
+are prefixed with an apostrophe unless they are plain numeric values. Coordinates
+and numeric sentiment scores are exported unchanged.
+Export is disabled for empty results and while data is loading. Downloads happen
+in the browser without uploading narratives to another service.

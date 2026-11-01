@@ -1,4 +1,4 @@
-import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary} from './data.mjs';
+import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV} from './data.mjs';
 const $ = id => document.getElementById(id);
 let events = [], filtered = [], visible = 12;
 function node(tag, text, cls) { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; }
@@ -76,10 +76,19 @@ function update() {
   filtered = filterEvents(events,{state:$('state').value,month:$('month').value,type:$('type').value});
   const summary = summarize(filtered); for (const key of Object.keys(summary)) $(key).textContent = summary[key].toLocaleString();
   $('status').textContent = `${filtered.length} of ${events.length} sample events match your filters.`;
+  $('download').disabled = filtered.length === 0;
   renderSentiment();
   renderWords();
   renderCards();
 }
+$('download').addEventListener('click', () => {
+  if (!filtered.length) return;
+  const url = URL.createObjectURL(new Blob([eventsCSV(filtered)], {type:'text/csv;charset=utf-8'}));
+  const link = document.createElement('a');
+  link.href = url; link.download = `weather-words-2024-${filtered.length}-events.csv`;
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 for (const id of ['state','month','type']) $(id).addEventListener('change', update);
 $('reset').addEventListener('click',()=>{ for (const id of ['state','month','type']) $(id).value=''; update(); });
 $('more').addEventListener('click',()=>{ const previous = visible; visible += 12; renderCards(); $('cards').children[previous]?.querySelector('h3')?.setAttribute('tabindex','-1'); $('cards').children[previous]?.querySelector('h3')?.focus(); });
