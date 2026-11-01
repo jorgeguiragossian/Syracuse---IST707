@@ -13,8 +13,9 @@ function narrativeNode(event) {
     if (!group) continue;
     paragraph.append(document.createTextNode(text.slice(cursor, entity.start).replace(/\|\|/g,'\n\n')));
     const mark = node('mark', text.slice(entity.start, entity.end), `entity ${group[0]}`);
-    mark.title = `${group[1]} (${entity.label})`; mark.tabIndex = 0;
-    mark.setAttribute('aria-label', `${entity.text}: ${group[1]}`);
+    const context = entity.source === 'noaa_location_context' ? ` · adjusted from ${entity.original_label} using this record’s NOAA location fields` : '';
+    mark.title = `${group[1]} (${entity.label})${context}`; mark.tabIndex = 0;
+    mark.setAttribute('aria-label', `${entity.text}: ${group[1]}${context}`);
     paragraph.append(mark); cursor = entity.end;
   }
   paragraph.append(document.createTextNode(text.slice(cursor).replace(/\|\|/g,'\n\n')));
