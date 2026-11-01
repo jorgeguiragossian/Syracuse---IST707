@@ -1,4 +1,4 @@
-import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV, distinctiveWords} from './data.mjs?v=distinctive-1';
+import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV, distinctiveWords} from './data.mjs?v=release-1';
 const $ = id => document.getElementById(id);
 let events = [], filtered = [], visible = 12;
 function node(tag, text, cls) { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; }

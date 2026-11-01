@@ -21,3 +21,26 @@ These checks verify rendering and behavior, not NLP accuracy. Entity and sentime
 predictions have not been evaluated against human annotations. Desktop/mobile
 viewport checks do not establish compatibility with every browser, physical device,
 or assistive technology. Public deployment has not been verified.
+
+## Version 1 completion review
+
+The final local build was checked in Chromium at 1440 × 1000, 390 × 844,
+and 320 × 700. All passed:
+
+- Correct distinctive-term counts and percentage-point differences for both groups.
+- Comparison independence from main browsing filters; identical-group and small-group states.
+- Actual filtered CSV downloads match expected source records and model predictions.
+- Existing word clouds, entity highlights, and sentiment summaries render correctly.
+- About navigation and all four explanatory sections are present.
+- No horizontal page overflow or uncaught JavaScript errors in these interactions.
+
+Additional mobile checks passed for keyboard access to the skip link, the Dubuque
+location correction, highlight toggle, no-match results, reset, pagination, and
+explicit export/comparison failure states when the dataset request fails.
+Three distinctive-word regression tests and six location-correction tests passed.
+Desktop/mobile About screenshots were visually inspected.
+
+Direct public-site review was attempted but the environment's network proxy returned
+403 Forbidden. This is an access restriction, not evidence that the public site is
+broken. User reports confirmed previous deployments, but the final About deployment
+still needs confirmation on the public site. No new NLP accuracy claims are made.
