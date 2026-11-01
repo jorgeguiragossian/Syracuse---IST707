@@ -69,3 +69,10 @@ then supporting narrative count, then alphabetical order. Tables show both raw
 counts/denominators and percentages. Identical groups produce no distinctive terms.
 The method is descriptive, not a significance test; report length and small groups
 can still affect it. Run `node --test scripts/test_distinctive.mjs` for regression checks.
+
+
+## Project overview
+
+The dashboard's About section explains sampling, preprocessing, entity corrections,
+sentiment, comparisons, exports, and interpretation limits. The project is an
+educational NLP demonstration, not a validated disaster analytics system.
