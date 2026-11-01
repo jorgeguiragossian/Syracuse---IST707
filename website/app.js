@@ -1,4 +1,4 @@
-import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV} from './data.mjs?v=comparison-1';
+import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV, distinctiveWords} from './data.mjs?v=distinctive-1';
 const $ = id => document.getElementById(id);
 let events = [], filtered = [], visible = 12;
 function node(tag, text, cls) { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; }
@@ -57,6 +57,28 @@ function renderWordCloud(words, cloud, table, max = words[0]?.count || 1) {
 function renderWords() {
   renderWordCloud(wordFrequencies(filtered), $('word-cloud'), $('word-counts'));
 }
+function renderDistinctive(group, other) {
+  const container = $(`distinctive-${group.side}`); container.replaceChildren();
+  const words = distinctiveWords(group.records, other.records);
+  if (!words.length) {
+    container.append(node('p', 'No distinctive words meet the minimum of two narratives and a higher mention rate than the other group.', 'word-description'));
+    return;
+  }
+  const table = document.createElement('table');
+  table.append(node('caption', `Group ${group.side.toUpperCase()} (${group.records.length} narratives) versus group ${other.side.toUpperCase()} (${other.records.length})`));
+  const head = document.createElement('thead'), heading = document.createElement('tr');
+  for (const text of ['Word','This group','Other group','Gap']) {
+    const th = node('th',text); th.scope = 'col'; heading.append(th);
+  }
+  head.append(heading); table.append(head);
+  const body = document.createElement('tbody');
+  for (const term of words) {
+    const row = document.createElement('tr');
+    row.append(node('th',term.word),node('td',`${term.count}/${group.records.length} (${(100*term.rate).toFixed(1)}%)`),node('td',`${term.otherCount}/${other.records.length} (${(100*term.otherRate).toFixed(1)}%)`),node('td',`+${term.gap.toFixed(1)} pp`));
+    row.firstElementChild.scope = 'row'; body.append(row);
+  }
+  table.append(body); container.append(table);
+}
 function renderComparison() {
   const groups = ['a','b'].map(side => {
     const type = $(`compare-${side}`).value;
@@ -71,6 +93,8 @@ function renderComparison() {
     const counts = sentimentSummary(records);
     $(`compare-sentiment-${side}`).textContent = 'Predicted sentiment: ' + Object.entries(counts).filter(([label,count]) => label !== 'Unavailable' || count).map(([label,count]) => `${label.toLowerCase()} ${count} (${records.length ? (100*count/records.length).toFixed(1) : '0.0'}%)`).join(' · ');
   }
+  renderDistinctive(groups[0],groups[1]);
+  renderDistinctive(groups[1],groups[0]);
   $('comparison-status').textContent = groups[0].type === groups[1].type ? 'Both groups select the same event type; their results are identical.' : `Comparing ${groups[0].type} (${groups[0].records.length}) with ${groups[1].type} (${groups[1].records.length}).`;
 }
 for (const side of ['a','b']) $(`compare-${side}`).addEventListener('change', renderComparison);
