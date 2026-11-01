@@ -1,4 +1,4 @@
-import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV} from './data.mjs';
+import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV} from './data.mjs?v=csv-export-2';
 const $ = id => document.getElementById(id);
 let events = [], filtered = [], visible = 12;
 function node(tag, text, cls) { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; }
@@ -77,6 +77,7 @@ function update() {
   const summary = summarize(filtered); for (const key of Object.keys(summary)) $(key).textContent = summary[key].toLocaleString();
   $('status').textContent = `${filtered.length} of ${events.length} sample events match your filters.`;
   $('download').disabled = filtered.length === 0;
+  $('download').textContent = filtered.length ? `Download filtered CSV (${filtered.length})` : 'No matching records to export';
   renderSentiment();
   renderWords();
   renderCards();
@@ -97,4 +98,4 @@ try {
   events = await response.json();
   options('state',[...new Set(events.map(e=>e.STATE))].sort()); options('month',months); options('type',[...new Set(events.map(e=>e.EVENT_TYPE))].sort());
   update();
-} catch (error) { $('status').textContent = 'The collection could not be loaded. Please refresh the page or check that the site is served over HTTP.'; console.error(error); }
+} catch (error) { $('download').textContent = 'Export unavailable'; $('status').textContent = 'The collection could not be loaded. Please refresh the page or check that the site is served over HTTP.'; console.error(error); }
