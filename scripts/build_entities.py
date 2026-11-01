@@ -2,6 +2,7 @@
 import csv
 import json
 from pathlib import Path
+from entity_context import contextual_entity
 import spacy
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
@@ -15,7 +16,7 @@ for record, doc in zip(records, nlp.pipe((r['EVENT_NARRATIVE'] for r in records)
     record['sentiment'] = sentiment.polarity_scores(text)
     # JavaScript slices use UTF-16 code units rather than Python code points.
     record['entities'] = [
-        {'text': ent.text, 'label': ent.label_,
+        {'text': ent.text, **contextual_entity(ent.text, ent.label_, record),
          'start': len(text[:ent.start_char].encode('utf-16-le')) // 2,
          'end': len(text[:ent.end_char].encode('utf-16-le')) // 2}
         for ent in doc.ents

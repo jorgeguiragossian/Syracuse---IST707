@@ -19,3 +19,16 @@ Filter by area, month, and event type. Filters combine with AND; reset restores 
 ## Regenerate entity predictions
 
 Install `scripts/requirements-nlp.txt` into a Python 3.12 virtual environment, then run `python scripts/build_entities.py` from the repository root. This rebuilds `website/events.json` from the source CSV, including model-predicted entity spans and VADER sentiment scores. The model is general-purpose English, not trained specifically on NOAA narratives; predictions are not ground truth. The original narratives remain unchanged. No text is sent to a third-party inference API.
+
+
+### Location context corrections
+
+If a PERSON or LANGUAGE entity exactly matches STATE, CZ_NAME, BEGIN_LOCATION, or END_LOCATION
+in the same NOAA record (ignoring case and repeated whitespace), it is displayed
+as LOC. No partial-name matching or narrative-only gazetteer is used. This corrects
+Dubuque in event 1172069 while leaving longer facility names and unmatched person
+names intact. The original label and matching fields are retained in events.json;
+tooltips identify corrected entities. Metadata matching is a heuristic and cannot
+prove the intended referent in every sentence.
+
+Run the correction regression checks with `python -m unittest discover -s scripts -p 'test_*.py'`.
