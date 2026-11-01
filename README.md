@@ -47,3 +47,14 @@ are prefixed with an apostrophe unless they are plain numeric values. Coordinate
 and numeric sentiment scores are exported unchanged.
 Export is disabled for empty results and while data is loading. Downloads happen
 in the browser without uploading narratives to another service.
+
+
+## Compare event types
+
+Two independent event-type selectors compare the full 200-record sample, ignoring
+main browsing filters. Default groups are Flash Flood and Tornado. Each shows its
+record count, top 20 word cloud, exact count table, and VADER sentiment distribution.
+Both clouds use the same font-size scale based on raw term occurrences; counts are
+not normalized for group size or narrative length. Groups below 10 records carry
+a small-sample note. Selecting the same type twice explicitly reports identical
+groups. Resetting the browsing filters does not reset the comparison.
