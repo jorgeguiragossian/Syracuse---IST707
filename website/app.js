@@ -1,4 +1,4 @@
-import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV} from './data.mjs?v=csv-export-2';
+import {months, filterEvents, summarize, wordFrequencies, sentimentLabel, sentimentSummary, eventsCSV} from './data.mjs?v=comparison-1';
 const $ = id => document.getElementById(id);
 let events = [], filtered = [], visible = 12;
 function node(tag, text, cls) { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; }
@@ -39,15 +39,12 @@ function renderCards() {
   }
   $('more').hidden = visible >= filtered.length;
 }
-function renderWords() {
-  const words = wordFrequencies(filtered);
-  const cloud = $('word-cloud'); cloud.replaceChildren();
-  const table = $('word-counts'); table.replaceChildren();
+function renderWordCloud(words, cloud, table, max = words[0]?.count || 1) {
+  cloud.replaceChildren(); table.replaceChildren();
   if (!words.length) {
     cloud.append(node('p', 'No words to display. Try a broader selection.', 'word-description'));
     return;
   }
-  const max = words[0].count;
   for (const {word, count} of words) {
     const term = node('span', word, 'cloud-word');
     term.style.fontSize = `${14 + 30 * Math.sqrt(count / max)}px`;
@@ -57,6 +54,26 @@ function renderWords() {
     const row = document.createElement('tr'); row.append(node('td', word), node('td', count.toLocaleString())); table.append(row);
   }
 }
+function renderWords() {
+  renderWordCloud(wordFrequencies(filtered), $('word-cloud'), $('word-counts'));
+}
+function renderComparison() {
+  const groups = ['a','b'].map(side => {
+    const type = $(`compare-${side}`).value;
+    const records = filterEvents(events, {type});
+    return {side, type, records, words:wordFrequencies(records,20)};
+  });
+  const max = Math.max(1, ...groups.flatMap(group => group.words.map(term => term.count)));
+  for (const {side, type, records, words} of groups) {
+    $(`compare-count-${side}`).textContent = `${records.length} event narratives · ${type}`;
+    $(`compare-warning-${side}`).textContent = records.length < 10 ? 'Small group: fewer than 10 records. Treat apparent differences cautiously.' : '';
+    renderWordCloud(words, $(`compare-cloud-${side}`), $(`compare-words-${side}`), max);
+    const counts = sentimentSummary(records);
+    $(`compare-sentiment-${side}`).textContent = 'Predicted sentiment: ' + Object.entries(counts).filter(([label,count]) => label !== 'Unavailable' || count).map(([label,count]) => `${label.toLowerCase()} ${count} (${records.length ? (100*count/records.length).toFixed(1) : '0.0'}%)`).join(' · ');
+  }
+  $('comparison-status').textContent = groups[0].type === groups[1].type ? 'Both groups select the same event type; their results are identical.' : `Comparing ${groups[0].type} (${groups[0].records.length}) with ${groups[1].type} (${groups[1].records.length}).`;
+}
+for (const side of ['a','b']) $(`compare-${side}`).addEventListener('change', renderComparison);
 function renderSentiment() {
   const summary = $('sentiment-summary'); summary.replaceChildren();
   if (!filtered.length) { summary.append(node('p', 'No matching narratives to analyze.', 'word-description')); return; }
@@ -97,5 +114,12 @@ try {
   const response = await fetch('events.json'); if (!response.ok) throw new Error(`HTTP ${response.status}`);
   events = await response.json();
   options('state',[...new Set(events.map(e=>e.STATE))].sort()); options('month',months); options('type',[...new Set(events.map(e=>e.EVENT_TYPE))].sort());
+  const types = [...new Set(events.map(e => e.EVENT_TYPE))].sort();
+  for (const [side, preferred] of [['a','Flash Flood'],['b','Tornado']]) {
+    options(`compare-${side}`,types);
+    $(`compare-${side}`).value = types.includes(preferred) ? preferred : types[0];
+    $(`compare-${side}`).disabled = false;
+  }
+  renderComparison();
   update();
-} catch (error) { $('download').textContent = 'Export unavailable'; $('status').textContent = 'The collection could not be loaded. Please refresh the page or check that the site is served over HTTP.'; console.error(error); }
+} catch (error) { $('comparison-status').textContent = 'Comparison unavailable: collection could not be loaded.'; $('download').textContent = 'Export unavailable'; $('status').textContent = 'The collection could not be loaded. Please refresh the page or check that the site is served over HTTP.'; console.error(error); }
